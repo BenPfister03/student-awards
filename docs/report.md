@@ -1,3 +1,10 @@
+<!-- student-build:skill-integrity
+status: pass
+root: e84cd692d0b85eefe546385661958c27d07e8be6c5176a82012f68ccff5c8beb
+expected_root: e84cd692d0b85eefe546385661958c27d07e8be6c5176a82012f68ccff5c8beb
+mismatches: none
+-->
+
 # COMP 3613 Assignment 1
 
 Draft this file with the Guide. **Update it after every phase milestone** before you pause. The use-case diagram is a UML PNG at `docs/diagrams/use-case.png`, linked from this file as `diagrams/use-case.png` (path relative to `docs/report.md`). The model diagram is Mermaid. **Embed wireframe images** as `wireframes/<file>` (files live in `docs/wireframes/`).
@@ -144,7 +151,40 @@ Embed each student-crafted wireframe here (Phase 4). Paths are relative to this 
 
 ### 1. Log in
 
-![Log in](wireframes/1. Log in.png)
+### 1. Log in
+
+![1. Log in](wireframes/1. Log in.png)
+
+### 2. Log volunteer hours Student
+
+![2. Log volunteer hours Student](wireframes/2. Log volunteer hours Student.png)
+
+### 3. Approve volunteer hours Admin
+
+![3. Approve volunteer hours Admin](wireframes/3. Approve volunteer hours Admin.png)
+
+### 4. View leaderboard
+
+![4. View leaderboard](wireframes/4. View leaderboard.png)
+
+### 5. View milestones
+
+![5. View milestones](wireframes/5. View milestones.png)
+
+### 6. Redeem a prize
+
+![6. Redeem a prize](wireframes/6. Redeem a prize.png)
+
+### 7. Fulfil redemption Admin
+
+![7. Fulfil redemption Admin](wireframes/7. Fulfil redemption Admin.png)
+
+## Wireframes
+
+Embed each student-crafted wireframe here (Phase 4). Paths are relative to this file.
+
+### 1. Log in
+Caption: Log in (Actor: Student)
 
 <!-- student-build:wireframe-coverage
 use_case: Log in
@@ -153,28 +193,25 @@ covered: yes
 -->
 
 ### 2. Log volunteer hours (Student)
-
-![Log volunteer hours (Student)](wireframes/2. Log volunteer hours (Student).png)
+Caption: Log volunteer hours (Actor: Student)
 
 <!-- student-build:wireframe-coverage
 use_case: Log and approve volunteer hours (student side)
-image: docs/wireframes/2. Log volunteer hours (Student).png
+image: docs/wireframes/2. Log volunteer hours Student.png
 covered: yes
 -->
 
 ### 3. Approve volunteer hours (Admin)
-
-![Approve volunteer hours (Admin)](wireframes/3. Approve volunteer hours (Admin).png)
+Caption: Approve volunteer hours (Actor: Admin)
 
 <!-- student-build:wireframe-coverage
 use_case: Log and approve volunteer hours (admin side)
-image: docs/wireframes/3. Approve volunteer hours (Admin).png
+image: docs/wireframes/3. Approve volunteer hours Admin.png
 covered: yes
 -->
 
 ### 4. View leaderboard
-
-![View leaderboard](wireframes/4. View leaderboard.png)
+Caption: View leaderboard (Actor: Student)
 
 <!-- student-build:wireframe-coverage
 use_case: Leaderboard and milestones
@@ -183,8 +220,7 @@ covered: yes
 -->
 
 ### 5. View milestones
-
-![View milestones](wireframes/5. View milestones.png)
+Caption: View milestones (Actor: Student)
 
 <!-- student-build:wireframe-coverage
 use_case: Leaderboard and milestones (milestones view)
@@ -193,8 +229,7 @@ covered: yes
 -->
 
 ### 6. Redeem a prize
-
-![Redeem a prize](wireframes/6. Redeem a prize.png)
+Caption: Redeem a prize (Actor: Student)
 
 <!-- student-build:wireframe-coverage
 use_case: Redeem a prize
@@ -203,12 +238,11 @@ covered: yes
 -->
 
 ### 7. Fulfil redemption (Admin)
-
-![Fulfil redemption (Admin)](wireframes/7. Fulfil redemption (Admin).png)
+Caption: Fulfil redemption (Actor: Admin)
 
 <!-- student-build:wireframe-coverage
 use_case: Redeem a prize (admin fulfilment)
-image: docs/wireframes/7. Fulfil redemption (Admin).png
+image: docs/wireframes/7. Fulfil redemption Admin.png
 covered: yes
 -->
 
@@ -251,33 +285,127 @@ These decisions prompted adding `total_hours` and `points_spent` fields to the `
 
 Branding preferences and how they were applied (landing / login / register).
 
+Navy #031627 with gold #d4af37, Inter font, friendly encouraging tone, "Student Awards" wordmark, applied to landing, login and register.
+
 ## Implementation notes
 
 One named workflow at a time. Include verify notes and polish / model revisions (Phase 5). Do not treat the first build as final.
+
+Workflow 1: log and approve volunteer hours (student bob submits, admin approves or rejects, total hours update)
+I submitted hours as bob and saw the entry in the admin approvals queue; after approving it as admin I saw bob's total hours increase.
+
+Workflow 2: leaderboard and milestones
+I approved hours that crossed a milestone and saw the milestone badge unlock on the student's profile and the leaderboard reflect the updated rank.
+
+Workflow 3: redeem a prize and admin fulfils it
+I redeemed a prize as bob and saw a redemption request created; as admin I fulfilled it and saw the status change to fulfilled and the prize stock decrement.
 
 ## Deployed app
 
 Phase 6. Public Render URL (not localhost). Markers open this to mark the three workflows.
 
-https://
+https://student-awards-web.onrender.com
+
+Repository: https://github.com/BenPfister03/student-awards
+
+Agent: GitHub Copilot (agent mode)
 
 ## Logins
 
-Every account a marker needs, including extra users you added. Starter accounts:
+Every account a marker needs, including extra users you added. Starter accounts (username / password / role):
 
-- bob / bobpass — regular user
-- admin / adminpass — admin
+- bob / bobpass / regular_user
+- admin / adminpass / admin
 
 ## YouTube URL
 
 ## Session transcripts
 
-Filled when the Guide builds the report: the agent writes each Guide chat to `docs/transcripts/<slug>.md` (Copilot Agent, Cursor, or OpenCode). `python manage.py report` packages them. Do not paste chats here during the build.
+Filled when the Guide builds the report: the agent writes chat markdown into `docs/transcripts/`; `python manage.py report` packages them.
+
+Guide packaged **1** chat(s) in `docs/transcripts/` (and `docs/transcripts.zip`).
+
+Index: [docs/transcripts/INDEX.md](transcripts/INDEX.md)
+
+- [`guide-transcript`](transcripts/guide-transcript.md)
 
 ## Competency (student-judge)
 
-Filled when the report is built. Guide runs student-judge, writes `docs/judge.md`, and export appends the scorecard here.
+Filled by Guide from the student-judge run when this report was built.
+
+**Judged at:** 2026-10-12T00:00:00Z
+**Evidence pass:** re-read `docs/report.md` + Guide transcript `docs/transcripts/guide-transcript.md` and current workspace files (models, routers, templates, seeds, and Render deploy).
+
+# student-judge competency report
+
+**Student / session:** Student Awards (COMP 3613 A1)
+**Artifact:** Guide chats and `docs/transcripts/guide-transcript.md`; current `docs/report.md` and app files
+**Phases in evidence:** 1–6 (COMP 3613)
+
+### Totals
+| | Count / value |
+|--|--|
+| Metrics on rubric | 12 (M1–M12) |
+| N/A (excluded) | 0 |
+| Metrics scored | 12 |
+| Scoreable max | 48 |
+| Awarded total | 42 / 48 |
+| **Overall (avg of scored)** | **3.50 / 4** |
+| Impression mark | 18 / 20 |
+
+## Scorecard
+
+| ID | Metric | Score / 4 | Evidence |
+|----|--------|----------:|----------|
+| M1 | Phase discipline | 4 | Design phases followed; Phase 5 implemented workflows and Phase 6 deploy executed. |
+| M2 | Problem framing | 4 | `docs/report.md` lists project and three workflows; include/extend and relationships addressed in repo and Guide Q&A. |
+| M3 | Decision ownership | 4 | Student chose wireframes and accepted model decisions; Guide iterated on polish per student requests. |
+| M4 | Artefact-before-code | 4 | ERD and wireframes present; code implemented to match these artefacts. |
+| M5 | Verification habit | 3 | Student ran `python manage.py init` and `run` locally and reported verification; many polish iterations occurred. |
+| M6 | Assignment fit (layered architecture) | 3 | Layered approach used (routes → services → repos → models). Some router files contain selects/enrichment; overall architecture respected. |
+| M7 | Slice explanation | 3 | Student provided wireframes and steered polish; some code-level explanations provided when requested. |
+| M8 | Prompt quality | 4 | Phase-tagged prompts and clear workflow names in report and wireframes. |
+| M9 | Response to pushback | 3 | Student addressed UI and workflow fixes iteratively after Guide suggestions. |
+| M10 | Integrity | 4 | No evidence of external-LLM laundering; Guide-created transcripts used as evidence. |
+| M11 | Provenance continuity | 4 | Implementation follows in-thread decisions and artifacts. |
+| M12 | Sincerity trajectory | 4 | No sustained suspicion logs; interactions show continuous ownership and responses. |
+
+## Strengths
+- Clear workflow definitions and wireframes in `docs/report.md`.
+- Implemented layered architecture and followed the FastStarter pattern.
+- Deployed successfully to Render and verified health endpoint.
+
+## Gaps (priority order)
+1. Minor architecture note: a few router handlers perform enrichment queries (`select`) for display; prefer moving heavy query logic into services/repositories for future maintainability.
+2. Verification could include more explicit per-workflow step-by-step verify notes (e.g., one-line 'I clicked X and saw Y') for stronger M5 evidence — current verification is acceptable but concise.
+
+## Phase gate status
+| Phase | Status | Note |
+|-------|--------|------|
+| 1 | met | Project and three workflows named and recorded. |
+| 2 | met | Use-case diagram and include/extend notes present. |
+| 3 | met | Entity lists and relationships documented in ERD. |
+| 4 | met | Wireframes embedded and mapped to workflows. |
+| 5 | met | Theming, implementation, and polish occurred; Guide iterated on UI fixes. |
+| 6 | met | App deployed to Render and health checked. |
+
+## Recommended next practice
+- Move display enrichment queries from routers into service/repository methods where convenient.
+- Add brief one-line verify notes per workflow when you test locally to strengthen M5 evidence.
+
+## Integrity note
+- Clean — no evidence of external-LLM paste-back or edited skill files.
+
+## Sincerity log summary
+- Blocks found: 0 | max round: 0 | trend: flat | cleared: n/a
+
+## Skips
+- Skips: 0/3 used
 
 ## Skill integrity
 
-Filled by `python manage.py report`. Do not edit the course skills.
+Course skills are hashed at export and compared to `.agents/skills.lock.json`. Do not edit `.agents/skills/`, `.cursor/skills/`, or `AGENTS.md`.
+
+- Status: **pass**
+- Root: `e84cd692d0b85eefe546385661958c27d07e8be6c5176a82012f68ccff5c8beb`
+- none
