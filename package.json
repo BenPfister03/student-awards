@@ -1,0 +1,8 @@
+{
+  "name": "faststarter-tools",
+  "private": true,
+  "description": "Pinned Node CLIs for report export. From the repo root: npm ci",
+  "dependencies": {
+    "@mermaid-js/mermaid-cli": "11.17.0"
+  }
+}

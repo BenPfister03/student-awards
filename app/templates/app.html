@@ -1,0 +1,46 @@
+{% extends "authenticated-base.html" %}
+{% block title %}Home — Student Awards{% endblock %}
+
+{% block subpage_content %}
+<div class="container-fluid py-2">
+  <h1 class="h4 mb-2">Home</h1>
+  <p class="text-muted mb-3">Welcome to Student Awards — quick overview of your activity and rewards.</p>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6 class="card-subtitle mb-2 text-muted">Approved Hours</h6>
+          <p class="h3 mb-0">{{ approved_hours }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6 class="card-subtitle mb-2 text-muted">Redeemable Balance</h6>
+          <p class="h3 mb-0">{{ redeemable }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6 class="card-subtitle mb-2 text-muted">Rank</h6>
+          <p class="h3 mb-0">{{ rank or '—' }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6 class="card-subtitle mb-2 text-muted">Latest Milestone</h6>
+          <p class="h5 mb-0">{{ latest_milestone or '—' }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Call-to-action row removed; sidebar and top nav provide navigation -->
+</div>
+{% endblock %}

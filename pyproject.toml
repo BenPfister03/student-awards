@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=64.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# Metadata only — install runtime deps with: pip install -r requirements.txt
+[project]
+name = "project-starter"
+version = "0.0.1"
+description = "COMP 3613 FastStarter assignment starter (FastAPI + SQLModel)"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "Kwasi Edwards", email = "kwasiedwards@gmail.com" }
+]
+dependencies = []
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[tool.setuptools]
+packages = ["app"]

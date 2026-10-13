@@ -1,0 +1,53 @@
+{% extends "authenticated-base.html" %}
+
+{% block subpage_content %}
+<div class="container">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h3>Redemptions</h3>
+            <p class="text-muted">Review redemption requests from students. Click "Mark fulfilled" when the prize has been delivered.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Prize</th>
+                    <th>Cost (hours)</th>
+                    <th>Requested</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for r in rows %}
+                <tr>
+                    <td class="fw-semibold">{{ r.username }}</td>
+                    <td>{{ r.prize_name }}</td>
+                    <td>{{ r.hours_cost }}</td>
+                    <td>{{ r.requested_at }}</td>
+                    <td>
+                        {% if r.status == 'requested' %}
+                            <span class="badge bg-warning text-dark">Requested</span>
+                        {% else %}
+                            <span class="badge bg-success">{{ r.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if r.status == 'requested' %}
+                        <form method="post" action="/redemptions/{{ r.id }}/fulfill">
+                            <button class="btn btn-sm btn-outline-success">Mark fulfilled</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
