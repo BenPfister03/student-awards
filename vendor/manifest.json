@@ -1,0 +1,32 @@
+{
+  "files": {
+    "vendor/plantuml/plantuml.jar": {
+      "sha256": "249ae0234a03acf999c3845eb683b495415b512bbfc7e7a4a173528c0892ec2e",
+      "bytes": 17732698
+    },
+    "vendor/plantuml/LICENSE.txt": {
+      "sha256": "0aadc58e7c3e1eee5914418ff63ffbd19b79747075190b5f9f69017ab58966df",
+      "bytes": 3594
+    },
+    "vendor/fonts/DejaVuSans.ttf": {
+      "sha256": "7da195a74c55bef988d0d48f9508bd5d849425c1770dba5d7bfc6ce9ed848954",
+      "bytes": 757076
+    },
+    "vendor/fonts/DejaVuSans-Bold.ttf": {
+      "sha256": "e6476c1b80502924294eed40894c5b18e06c181444ca953e5334262df9c27724",
+      "bytes": 705684
+    },
+    "vendor/fonts/DejaVuSans-Oblique.ttf": {
+      "sha256": "4af75fa16ee6d3ad43e1ecec41862c24954af26a55c6bb1ebb27bd486a50f5f4",
+      "bytes": 635416
+    },
+    "vendor/fonts/DejaVuSans-BoldOblique.ttf": {
+      "sha256": "eb436dca0c2594b73d8b603b892e374fdfd8d885d25ffb4f18df4c4c0b49e50f",
+      "bytes": 643292
+    },
+    "vendor/fonts/LICENSE": {
+      "sha256": "7a083b136e64d064794c3419751e5c7dd10d2f64c108fe5ba161eae5e5958a93",
+      "bytes": 8816
+    }
+  }
+}

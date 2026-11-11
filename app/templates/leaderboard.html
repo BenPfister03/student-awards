@@ -1,0 +1,33 @@
+{% extends "authenticated-base.html" %}
+{% block title %}Leaderboard — Student Awards{% endblock %}
+
+{% block subpage_content %}
+<div class="container py-3">
+  <h2 class="h5 mb-3">Leaderboard</h2>
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Student</th>
+          <th class="text-end">Approved hours</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr class="{% if user.id == r.id %}table-primary{% endif %}">
+          <td>{{ loop.index }}</td>
+          <td>{{ r.username }} {% if user.id == r.id %}<small class="text-muted">(you)</small>{% endif %}</td>
+          <td class="text-end">{{ '%.2f'|format(r.total_hours) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if your_rank %}
+  <div class="mt-3">
+    <strong>Your rank:</strong> {{ your_rank }} — <strong>Total approved hours:</strong> {{ '%.2f'|format(your_total) }}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,2601 @@
+{
+  "info": {
+    "_postman_id": "5f0d3a52-6c0e-4b8e-9d54-0a1b2c3d4e5f",
+    "name": "Student Awards - API tests (COMP 3613 A2)",
+    "description": "Automated API tests for the Student Awards app.\n\n**Before every run:** `python manage.py init` (drops + reseeds the DB) then `python manage.py run`.\n**Run:** Collection Runner (keep 'Save cookies' on) or\n`newman run postman/student-awards.postman_collection.json -e postman/local.postman_environment.json`.\n\nRequests run in order: later folders depend on state created by earlier ones (login cookies, pending entries, redemption ids). Redirects are NOT followed so the 303 responses and Location headers can be asserted.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0. Setup & public endpoints",
+      "description": "Smoke tests that need no login.",
+      "item": [
+        {
+          "name": "GET /logout (clear any old session)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 303', () => pm.response.to.have.status(303));",
+                  "pm.test('Redirects to a URL ending in /login', () => {",
+                  "    const loc = pm.response.headers.get('Location') || '';",
+                  "    pm.expect(loc).to.include('/login');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "logout"
+              ]
+            },
+            "description": "Run first: guarantees the Postman cookie jar holds no session."
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Content-Type is JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('Body is {ok: true}', () => pm.expect(pm.response.json()).to.eql({ ok: true }));",
+                  "pm.test('Response time < 2000ms', () => pm.expect(pm.response.responseTime).to.be.below(2000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET / (landing page)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Body contains \"Student Awards\"', () => pm.expect(pm.response.text()).to.include(\"Student Awards\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": []
+            },
+            "description": ""
+          }
+        },
+        {
+          "name": "GET /login (login form)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Body contains \"name=\"username\"\"', () => pm.expect(pm.response.text()).to.include(\"name=\\\"username\\\"\"));",
+                  "pm.test('Body contains \"name=\"password\"\"', () => pm.expect(pm.response.text()).to.include(\"name=\\\"password\\\"\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /register (register form)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Body contains \"name=\"email\"\"', () => pm.expect(pm.response.text()).to.include(\"name=\\\"email\\\"\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "register"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /api/users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns a JSON array', () => pm.expect(pm.response.json()).to.be.an('array').that.is.not.empty);",
+                  "pm.test('Every user has exactly id, username, email', () => {",
+                  "    pm.response.json().forEach(u => pm.expect(Object.keys(u).sort()).to.eql(['email', 'id', 'username']));",
+                  "});",
+                  "pm.test('Seeded users are present', () => {",
+                  "    const names = pm.response.json().map(u => u.username);",
+                  "    ['bob', 'admin', 'amy', 'cal', 'dee'].forEach(n => pm.expect(names).to.include(n));",
+                  "});",
+                  "pm.test('Password / hash is never exposed', () => pm.expect(pm.response.text()).to.not.match(/password|argon2/i));",
+                  "pm.test('Response time < 2000ms', () => pm.expect(pm.response.responseTime).to.be.below(2000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "DELETE /api/users (method not allowed)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 405', () => pm.response.to.have.status(405));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /openapi.json",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Documents /api/users', () => pm.expect(pm.response.json().paths).to.have.property('/api/users'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/openapi.json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "openapi.json"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /no/such/page",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/no/such/page",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "no",
+                "such",
+                "page"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Authentication",
+      "description": "Login, logout, registration and unauthenticated access.",
+      "item": [
+        {
+          "name": "GET /app without login is blocked",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unauthorized page is rendered (Return to Login link)', () => {",
+                  "    pm.expect(pm.response.text()).to.include('Return to Login');",
+                  "    pm.expect(pm.response.text()).to.include('Unauthorized');",
+                  "});",
+                  "pm.test('Protected content is NOT leaked', () => {",
+                  "    pm.expect(pm.response.text()).to.not.include('Approved Hours');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/app",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /admin without login is blocked",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unauthorized page is rendered (Return to Login link)', () => {",
+                  "    pm.expect(pm.response.text()).to.include('Return to Login');",
+                  "    pm.expect(pm.response.text()).to.include('Unauthorized');",
+                  "});",
+                  "pm.test('Protected content is NOT leaked', () => {",
+                  "    pm.expect(pm.response.text()).to.not.include('Approved Hours');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /prizes without login is blocked",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unauthorized page is rendered (Return to Login link)', () => {",
+                  "    pm.expect(pm.response.text()).to.include('Return to Login');",
+                  "    pm.expect(pm.response.text()).to.include('Unauthorized');",
+                  "});",
+                  "pm.test('Protected content is NOT leaked', () => {",
+                  "    pm.expect(pm.response.text()).to.not.include('Approved Hours');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/prizes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "prizes"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "POST /hours/submit without login is blocked",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unauthorized page is rendered (Return to Login link)', () => {",
+                  "    pm.expect(pm.response.text()).to.include('Return to Login');",
+                  "    pm.expect(pm.response.text()).to.include('Unauthorized');",
+                  "});",
+                  "pm.test('Protected content is NOT leaked', () => {",
+                  "    pm.expect(pm.response.text()).to.not.include('Approved Hours');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/hours/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "hours",
+                "submit"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "activity_id",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "hours",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "proof_note",
+                  "value": "x",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "POST /login - wrong password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const setCookies = () => pm.response.headers.filter(h => h.key.toLowerCase() === 'set-cookie').map(h => String(h.value));",
+                  "pm.test('Status is 303', () => pm.response.to.have.status(303));",
+                  "pm.test('Redirects to a URL ending in /login', () => {",
+                  "    const loc = pm.response.headers.get('Location') || '';",
+                  "    pm.expect(loc).to.include('/login');",
+                  "});",
+                  "pm.test('No auth cookie is set', () => pm.expect(setCookies().some(v => v.includes('access_token='))).to.be.false);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "bob",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "wrong",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "POST /login - missing password field",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 422', () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "bob",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "POST /register - new student",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('newUser', 'pm_' + Date.now());",
+                  "pm.collectionVariables.set('newEmail', 'pm_' + Date.now() + '@example.com');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 303', () => pm.response.to.have.status(303));",
+                  "pm.test('Redirects to a URL ending in /login', () => {",
+                  "    const loc = pm.response.headers.get('Location') || '';",
+                  "    pm.expect(loc).to.include('/login');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "register"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "{{newUser}}",
+                  "type": "text"
+                },
+                {
+                  "key": "email",
+                  "value": "{{newEmail}}",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "pmpass123",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "POST /register - duplicate username",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 303', () => pm.response.to.have.status(303));",
+                  "pm.test('Redirects to a URL ending in /register', () => {",
+                  "    const loc = pm.response.headers.get('Location') || '';",
+                  "    pm.expect(loc).to.include('/register');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "register"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "bob",
+                  "type": "text"
+                },
+                {
+                  "key": "email",
+                  "value": "someoneelse@example.com",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "x",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "POST /login - new student can log in",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 303', () => pm.response.to.have.status(303));",
+                  "pm.test('Redirects to a URL ending in /app', () => {",
+                  "    const loc = pm.response.headers.get('Location') || '';",
+                  "    pm.expect(loc).to.include('/app');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "description": "Uses collection variable newUser created two requests earlier.",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "{{newUser}}",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "pmpass123",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 303', () => pm.response.to.have.status(303));",
+                  "pm.test('Redirects to a URL ending in /login', () => {",
+                  "    const loc = pm.response.headers.get('Location') || '';",
+                  "    pm.expect(loc).to.include('/login');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "logout"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /app after logout is blocked",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unauthorized page is rendered (Return to Login link)', () => {",
+                  "    pm.expect(pm.response.text()).to.include('Return to Login');",
+                  "    pm.expect(pm.response.text()).to.include('Unauthorized');",
+                  "});",
+                  "pm.test('Protected content is NOT leaked', () => {",
+                  "    pm.expect(pm.response.text()).to.not.include('Approved Hours');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/app",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Workflow 1a - Student logs hours",
+      "description": "",
+      "item": [
+        {
+          "name": "POST /login as bob",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const setCookies = () => pm.response.headers.filter(h => h.key.toLowerCase() === 'set-cookie').map(h => String(h.value));",
+                  "pm.test('Status is 303', () => pm.response.to.have.status(303));",
+                  "pm.test('Redirects to a URL ending in /app', () => {",
+                  "    const loc = pm.response.headers.get('Location') || '';",
+                  "    pm.expect(loc).to.include('/app');",
+                  "});",
+                  "pm.test('HttpOnly auth cookie is set', () => {",
+                  "    const c = setCookies().find(v => v.includes('access_token='));",
+                  "    pm.expect(c, 'access_token Set-Cookie header').to.be.a('string');",
+                  "    pm.expect(c.toLowerCase()).to.include('httponly');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "bob",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "bobpass",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /app (student home)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Body contains \"Approved Hours\"', () => pm.expect(pm.response.text()).to.include(\"Approved Hours\"));",
+                  "pm.test('Body contains \"Redeemable Balance\"', () => pm.expect(pm.response.text()).to.include(\"Redeemable Balance\"));",
+                  "pm.test('Body contains \"Rank\"', () => pm.expect(pm.response.text()).to.include(\"Rank\"));",
+                  "pm.test('Response time < 2000ms', () => pm.expect(pm.response.responseTime).to.be.below(2000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/app",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /hours/log",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Body contains \"Beach cleanup\"', () => pm.expect(pm.response.text()).to.include(\"Beach cleanup\"));",
+                  "pm.test('Body contains \"Food drive\"', () => pm.expect(pm.response.text()).to.include(\"Food drive\"));",
+                  "pm.test('Body contains \"Tutoring\"', () => pm.expect(pm.response.text()).to.include(\"Tutoring\"));",
+                  "pm.test('Body contains \"My history\"', () => pm.expect(pm.response.text()).to.include(\"My history\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/hours/log",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "hours",
+                "log"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "POST /hours/submit - 10h (to be approved)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 303', () => pm.response.to.have.status(303));",
+                  "pm.test('Redirects to a URL ending in /app', () => {",
+                  "    const loc = pm.response.headers.get('Location') || '';",
+                  "    pm.expect(loc).to.include('/app');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/hours/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "hours",
+                "submit"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "activity_id",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "hours",
+                  "value": "10",
+                  "type": "text"
+                },
+                {
+                  "key": "proof_note",
+                  "value": "postman-approve-me",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "POST /hours/submit - 2h (to be rejected)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 303', () => pm.response.to.have.status(303));",
+                  "pm.test('Redirects to a URL ending in /app', () => {",
+                  "    const loc = pm.response.headers.get('Location') || '';",
+                  "    pm.expect(loc).to.include('/app');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/hours/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "hours",
+                "submit"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "activity_id",
+                  "value": "2",
+                  "type": "text"
+                },
+                {
+                  "key": "hours",
+                  "value": "2",
+                  "type": "text"
+                },
+                {
+                  "key": "proof_note",
+                  "value": "postman-reject-me",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "POST /hours/submit - hours not a number",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 422', () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/hours/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "hours",
+                "submit"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "activity_id",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "hours",
+                  "value": "abc",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "POST /hours/submit - missing activity",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 422', () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/hours/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "hours",
+                "submit"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "hours",
+                  "value": "1",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /hours/log - entries are pending",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Body contains \"pending\"', () => pm.expect(pm.response.text()).to.include(\"pending\"));",
+                  "pm.test('Body contains \"10.0\"', () => pm.expect(pm.response.text()).to.include(\"10.0\"));",
+                  "pm.test('Body contains \"2.0\"', () => pm.expect(pm.response.text()).to.include(\"2.0\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/hours/log",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "hours",
+                "log"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /admin as student is blocked",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unauthorized page is rendered (Return to Login link)', () => {",
+                  "    pm.expect(pm.response.text()).to.include('Return to Login');",
+                  "    pm.expect(pm.response.text()).to.include('Unauthorized');",
+                  "});",
+                  "pm.test('Protected content is NOT leaked', () => {",
+                  "    pm.expect(pm.response.text()).to.not.include('Approved Hours');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /admin/approvals as student is blocked",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unauthorized page is rendered (Return to Login link)', () => {",
+                  "    pm.expect(pm.response.text()).to.include('Return to Login');",
+                  "    pm.expect(pm.response.text()).to.include('Unauthorized');",
+                  "});",
+                  "pm.test('Protected content is NOT leaked', () => {",
+                  "    pm.expect(pm.response.text()).to.not.include('Approved Hours');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/approvals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "approvals"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Workflow 1b - Admin approves / rejects",
+      "description": "",
+      "item": [
+        {
+          "name": "POST /login as admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 303', () => pm.response.to.have.status(303));",
+                  "pm.test('Redirects to a URL ending in /admin', () => {",
+                  "    const loc = pm.response.headers.get('Location') || '';",
+                  "    pm.expect(loc).to.include('/admin');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "admin",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "adminpass",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /admin (dashboard)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Body contains \"Pending Hours\"', () => pm.expect(pm.response.text()).to.include(\"Pending Hours\"));",
+                  "pm.test('Body contains \"Requested Redemptions\"', () => pm.expect(pm.response.text()).to.include(\"Requested Redemptions\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /admin/approvals (pending queue)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Body contains \"bob\"', () => pm.expect(pm.response.text()).to.include(\"bob\"));",
+                  "pm.test('Body contains \"Beach cleanup\"', () => pm.expect(pm.response.text()).to.include(\"Beach cleanup\"));",
+                  "pm.test('Body contains \"Food drive\"', () => pm.expect(pm.response.text()).to.include(\"Food drive\"));",
+                  "pm.test('Body contains \"postman-approve-me\"', () => pm.expect(pm.response.text()).to.include(\"postman-approve-me\"));",
+                  "pm.test('Body contains \"postman-reject-me\"', () => pm.expect(pm.response.text()).to.include(\"postman-reject-me\"));",
+                  "const ids = [...pm.response.text().matchAll(/\\/admin\\/approvals\\/(\\d+)\\/approve/g)].map(m => m[1]);",
+                  "pm.test('At least two pending entries are queued', () => pm.expect(ids.length).to.be.at.least(2));",
+                  "if (ids.length >= 2) {",
+                  "    pm.collectionVariables.set('approveId', ids[ids.length - 2]);",
+                  "    pm.collectionVariables.set('rejectId', ids[ids.length - 1]);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/approvals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "approvals"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /app as admin redirects to /admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 303', () => pm.response.to.have.status(303));",
+                  "pm.test('Redirects to a URL ending in /admin', () => {",
+                  "    const loc = pm.response.headers.get('Location') || '';",
+                  "    pm.expect(loc).to.include('/admin');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/app",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "POST reject without a reason",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 422', () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/approvals/{{approveId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "approvals",
+                "{{approveId}}",
+                "reject"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "POST reject with reason",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 303', () => pm.response.to.have.status(303));",
+                  "pm.test('Redirects to a URL ending in /admin/approvals', () => {",
+                  "    const loc = pm.response.headers.get('Location') || '';",
+                  "    pm.expect(loc).to.include('/admin/approvals');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/approvals/{{rejectId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "approvals",
+                "{{rejectId}}",
+                "reject"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "reason",
+                  "value": "Postman: photo unreadable",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "POST approve",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 303', () => pm.response.to.have.status(303));",
+                  "pm.test('Redirects to a URL ending in /admin/approvals', () => {",
+                  "    const loc = pm.response.headers.get('Location') || '';",
+                  "    pm.expect(loc).to.include('/admin/approvals');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/approvals/{{approveId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "approvals",
+                "{{approveId}}",
+                "approve"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /admin/approvals - reviewed entries left the queue",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Approved entry is gone', () => pm.expect(pm.response.text()).to.not.include('/admin/approvals/' + pm.collectionVariables.get('approveId') + '/approve'));",
+                  "pm.test('Rejected entry is gone', () => pm.expect(pm.response.text()).to.not.include('/admin/approvals/' + pm.collectionVariables.get('rejectId') + '/reject'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/approvals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "approvals"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Workflow 2 - Leaderboard & milestones",
+      "description": "",
+      "item": [
+        {
+          "name": "POST /login as bob",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 303', () => pm.response.to.have.status(303));",
+                  "pm.test('Redirects to a URL ending in /app', () => {",
+                  "    const loc = pm.response.headers.get('Location') || '';",
+                  "    pm.expect(loc).to.include('/app');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "bob",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "bobpass",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /hours/log - shows approved + rejected with reason",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Body contains \"approved\"', () => pm.expect(pm.response.text()).to.include(\"approved\"));",
+                  "pm.test('Body contains \"rejected\"', () => pm.expect(pm.response.text()).to.include(\"rejected\"));",
+                  "pm.test('Body contains \"Postman: photo unreadable\"', () => pm.expect(pm.response.text()).to.include(\"Postman: photo unreadable\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/hours/log",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "hours",
+                "log"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /leaderboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Seeded students are listed', () => ['amy', 'cal', 'dee', 'bob'].forEach(n => pm.expect(pm.response.text()).to.include('<td>' + n)));",
+                  "pm.test('Admin is not ranked', () => pm.expect(pm.response.text()).to.not.include('<td>admin'));",
+                  "pm.test('Current user is highlighted', () => pm.expect(pm.response.text()).to.include('(you)'));",
+                  "pm.test('amy (32h) is listed above bob (10h)', () => {",
+                  "    const t = pm.response.text();",
+                  "    pm.expect(t.indexOf('<td>amy')).to.be.below(t.indexOf('<td>bob'));",
+                  "});",
+                  "pm.test('Rejected hours are not counted (bob has 10.00, not 12.00)', () => {",
+                  "    pm.expect(pm.response.text()).to.include('10.00');",
+                  "    pm.expect(pm.response.text()).to.not.include('12.00');",
+                  "});",
+                  "pm.test('Response time < 2000ms', () => pm.expect(pm.response.responseTime).to.be.below(2000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/leaderboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "leaderboard"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /milestones - Bronze unlocked",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('All three milestones listed', () => ['Bronze', 'Silver', 'Gold'].forEach(m => pm.expect(pm.response.text()).to.include(m)));",
+                  "pm.test('Exactly one badge unlocked at 10h', () => pm.expect((pm.response.text().match(/Unlocked/g) || []).length).to.eql(1));",
+                  "pm.test('Progress towards Silver is shown', () => pm.expect(pm.response.text()).to.include('10.00 / 25.0'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/milestones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "milestones"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /app - latest milestone",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Body contains \"Latest Milestone\"', () => pm.expect(pm.response.text()).to.include(\"Latest Milestone\"));",
+                  "pm.test('Body contains \"Bronze\"', () => pm.expect(pm.response.text()).to.include(\"Bronze\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/app",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "app"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Workflow 3 - Redeem a prize",
+      "description": "",
+      "item": [
+        {
+          "name": "GET /prizes - balance 10 and active prizes only",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Body contains \"Water bottle\"', () => pm.expect(pm.response.text()).to.include(\"Water bottle\"));",
+                  "pm.test('Body contains \"Mug\"', () => pm.expect(pm.response.text()).to.include(\"Mug\"));",
+                  "pm.test('Body contains \"T-shirt\"', () => pm.expect(pm.response.text()).to.include(\"T-shirt\"));",
+                  "pm.test('Body contains \"Redeemable balance: <strong>10.0</strong>\"', () => pm.expect(pm.response.text()).to.include(\"Redeemable balance: <strong>10.0</strong>\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/prizes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "prizes"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "POST redeem Water bottle (10h)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 303', () => pm.response.to.have.status(303));",
+                  "pm.test('Redirects to a URL ending in /prizes', () => {",
+                  "    const loc = pm.response.headers.get('Location') || '';",
+                  "    pm.expect(loc).to.include('/prizes');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/prizes/1/redeem",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "prizes",
+                "1",
+                "redeem"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /prizes - balance deducted, stock decreased",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Body contains \"Redeemable balance: <strong>0.0</strong>\"', () => pm.expect(pm.response.text()).to.include(\"Redeemable balance: <strong>0.0</strong>\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/prizes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "prizes"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "POST redeem Mug with 0 balance",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 303', () => pm.response.to.have.status(303));",
+                  "pm.test('Redirects to a URL ending in /prizes?error=', () => {",
+                  "    const loc = pm.response.headers.get('Location') || '';",
+                  "    pm.expect(loc).to.include('/prizes?error=');",
+                  "});",
+                  "pm.test('Error explains the shortfall', () => pm.expect(decodeURIComponent((pm.response.headers.get('Location') || '').replace(/\\+/g, ' '))).to.include('Insufficient balance'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/prizes/2/redeem",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "prizes",
+                "2",
+                "redeem"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "POST redeem out-of-stock Tote bag",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 303', () => pm.response.to.have.status(303));",
+                  "pm.test('Redirects to a URL ending in /prizes?error=', () => {",
+                  "    const loc = pm.response.headers.get('Location') || '';",
+                  "    pm.expect(loc).to.include('/prizes?error=');",
+                  "});",
+                  "pm.test('Error says out of stock', () => pm.expect(decodeURIComponent((pm.response.headers.get('Location') || '').replace(/\\+/g, ' '))).to.include('Out of stock'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/prizes/4/redeem",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "prizes",
+                "4",
+                "redeem"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "POST redeem unknown prize",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 303', () => pm.response.to.have.status(303));",
+                  "pm.test('Redirects to a URL ending in /prizes?error=', () => {",
+                  "    const loc = pm.response.headers.get('Location') || '';",
+                  "    pm.expect(loc).to.include('/prizes?error=');",
+                  "});",
+                  "pm.test('Error says not available', () => pm.expect(decodeURIComponent((pm.response.headers.get('Location') || '').replace(/\\+/g, ' '))).to.include('Prize not available'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/prizes/99999/redeem",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "prizes",
+                "99999",
+                "redeem"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /leaderboard - rank unaffected by redeeming",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Body contains \"10.00\"', () => pm.expect(pm.response.text()).to.include(\"10.00\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/leaderboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "leaderboard"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /milestones - badge kept after redeeming",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Bronze still unlocked', () => pm.expect((pm.response.text().match(/Unlocked/g) || []).length).to.eql(1));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/milestones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "milestones"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "POST /login as admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 303', () => pm.response.to.have.status(303));",
+                  "pm.test('Redirects to a URL ending in /admin', () => {",
+                  "    const loc = pm.response.headers.get('Location') || '';",
+                  "    pm.expect(loc).to.include('/admin');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "admin",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "adminpass",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /redemptions - request visible",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Body contains \"bob\"', () => pm.expect(pm.response.text()).to.include(\"bob\"));",
+                  "pm.test('Body contains \"Water bottle\"', () => pm.expect(pm.response.text()).to.include(\"Water bottle\"));",
+                  "pm.test('Body contains \"Requested\"', () => pm.expect(pm.response.text()).to.include(\"Requested\"));",
+                  "const ids = [...pm.response.text().matchAll(/\\/redemptions\\/(\\d+)\\/fulfill/g)].map(m => m[1]);",
+                  "pm.test('A requested redemption is waiting', () => pm.expect(ids.length).to.be.at.least(1));",
+                  "if (ids.length) pm.collectionVariables.set('redemptionId', ids[ids.length - 1]);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/redemptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "redemptions"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "POST fulfil redemption",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 303', () => pm.response.to.have.status(303));",
+                  "pm.test('Redirects to a URL ending in /redemptions', () => {",
+                  "    const loc = pm.response.headers.get('Location') || '';",
+                  "    pm.expect(loc).to.include('/redemptions');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/redemptions/{{redemptionId}}/fulfill",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "redemptions",
+                "{{redemptionId}}",
+                "fulfill"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /redemptions - now fulfilled",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Fulfil button is gone for that request', () => pm.expect(pm.response.text()).to.not.include('/redemptions/' + pm.collectionVariables.get('redemptionId') + '/fulfill'));",
+                  "pm.test('Fulfilled badge shown', () => pm.expect(pm.response.text()).to.include('bg-success'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/redemptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "redemptions"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Authorization (negative tests)",
+      "description": "",
+      "item": [
+        {
+          "name": "POST /login as bob",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 303', () => pm.response.to.have.status(303));",
+                  "pm.test('Redirects to a URL ending in /app', () => {",
+                  "    const loc = pm.response.headers.get('Location') || '';",
+                  "    pm.expect(loc).to.include('/app');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "bob",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "bobpass",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "Student cannot approve hours",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unauthorized page is rendered (Return to Login link)', () => {",
+                  "    pm.expect(pm.response.text()).to.include('Return to Login');",
+                  "    pm.expect(pm.response.text()).to.include('Unauthorized');",
+                  "});",
+                  "pm.test('Protected content is NOT leaked', () => {",
+                  "    pm.expect(pm.response.text()).to.not.include('Approved Hours');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/approvals/1/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "approvals",
+                "1",
+                "approve"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "Student cannot reject hours",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unauthorized page is rendered (Return to Login link)', () => {",
+                  "    pm.expect(pm.response.text()).to.include('Return to Login');",
+                  "    pm.expect(pm.response.text()).to.include('Unauthorized');",
+                  "});",
+                  "pm.test('Protected content is NOT leaked', () => {",
+                  "    pm.expect(pm.response.text()).to.not.include('Approved Hours');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/approvals/1/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "approvals",
+                "1",
+                "reject"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "reason",
+                  "value": "x",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "Student cannot fulfil redemptions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unauthorized page is rendered (Return to Login link)', () => {",
+                  "    pm.expect(pm.response.text()).to.include('Return to Login');",
+                  "    pm.expect(pm.response.text()).to.include('Unauthorized');",
+                  "});",
+                  "pm.test('Protected content is NOT leaked', () => {",
+                  "    pm.expect(pm.response.text()).to.not.include('Approved Hours');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/redemptions/1/fulfill",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "redemptions",
+                "1",
+                "fulfill"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "Student cannot open /redemptions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unauthorized page is rendered (Return to Login link)', () => {",
+                  "    pm.expect(pm.response.text()).to.include('Return to Login');",
+                  "    pm.expect(pm.response.text()).to.include('Unauthorized');",
+                  "});",
+                  "pm.test('Protected content is NOT leaked', () => {",
+                  "    pm.expect(pm.response.text()).to.not.include('Approved Hours');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/redemptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "redemptions"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "GET /logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 303', () => pm.response.to.have.status(303));",
+                  "pm.test('Redirects to a URL ending in /login', () => {",
+                  "    const loc = pm.response.headers.get('Location') || '';",
+                  "    pm.expect(loc).to.include('/login');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "logout"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "Anonymous cannot redeem",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unauthorized page is rendered (Return to Login link)', () => {",
+                  "    pm.expect(pm.response.text()).to.include('Return to Login');",
+                  "    pm.expect(pm.response.text()).to.include('Unauthorized');",
+                  "});",
+                  "pm.test('Protected content is NOT leaked', () => {",
+                  "    pm.expect(pm.response.text()).to.not.include('Approved Hours');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/prizes/1/redeem",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "prizes",
+                "1",
+                "redeem"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        },
+        {
+          "name": "Anonymous cannot view leaderboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unauthorized page is rendered (Return to Login link)', () => {",
+                  "    pm.expect(pm.response.text()).to.include('Return to Login');",
+                  "    pm.expect(pm.response.text()).to.include('Unauthorized');",
+                  "});",
+                  "pm.test('Protected content is NOT leaked', () => {",
+                  "    pm.expect(pm.response.text()).to.not.include('Approved Hours');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/leaderboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "leaderboard"
+              ]
+            },
+            "description": ""
+          },
+          "protocolProfileBehavior": {
+            "followRedirects": false
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "newUser",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "newEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "approveId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "rejectId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "redemptionId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{% extends "authenticated-base.html" %}
+
+{% block subpage_content %}
+<style>
+    /* Clear disabled appearance for redeem buttons */
+    .btn[disabled],
+    button[disabled] {
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+        color: #fff !important;
+        opacity: 0.75 !important;
+        cursor: not-allowed !important;
+        box-shadow: none !important;
+    }
+    .redeem-reason {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-left: 0.5rem;
+    }
+</style>
+
+<div class="container">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h3>Prizes</h3>
+            <p class="text-muted">Redeem your approved hours for prizes. Redeemable balance: <strong>{{ redeemable }}</strong> hours.</p>
+            {% if error %}
+            <div class="alert alert-danger" role="alert">{{ error }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Prize</th>
+                    <th>Description</th>
+                    <th>Cost (hours)</th>
+                    <th>Stock</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for p in prizes %}
+                <tr>
+                    <td class="fw-semibold">{{ p.name }}</td>
+                    <td>{{ p.description or '' }}</td>
+                    <td>   {{ p.hours_cost }}</td>
+                    <td>{{ p.stock }}</td>
+                    <td>
+                        <form method="post" action="/prizes/{{ p.id }}/redeem" class="d-inline">
+                            {% set out_of_stock = (p.stock <= 0) %}
+                            {% set insufficient = (redeemable < p.hours_cost) %}
+                            <button class="btn btn-primary btn-sm" type="submit" {% if out_of_stock or insufficient %}disabled{% endif %}>Redeem</button>
+                        </form>
+                        {% if out_of_stock %}
+                            <span class="redeem-reason">Out of stock</span>
+                        {% elif insufficient %}
+                            {% set need = (p.hours_cost - redeemable) %}
+                            <span class="redeem-reason">Need {{ need }} more hours</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

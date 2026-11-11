@@ -1,0 +1,34 @@
+{% extends "authenticated-base.html" %}
+{% block title %}Milestones — Student Awards{% endblock %}
+
+{% block subpage_content %}
+<div class="container py-3">
+  <h2 class="h5 mb-3">Milestones</h2>
+  <div class="mb-3">
+    <div class="fw-semibold">Total approved hours: {{ '%.2f'|format(total_hours) }}</div>
+    {% if next_milestone %}
+    <div class="small text-muted">Progress to next milestone: {{ '%.2f'|format(total_hours) }} / {{ next_milestone.hours_threshold }}</div>
+    <div class="progress my-2" style="height: 12px;">
+      <div class="progress-bar bg-warning" role="progressbar" style="width: {{ (total_hours / next_milestone.hours_threshold * 100) if next_milestone else 100 }}%;" aria-valuenow="{{ total_hours }}" aria-valuemin="0" aria-valuemax="{{ next_milestone.hours_threshold }}"></div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="row g-3">
+    {% for m in milestones %}
+    <div class="col-12 col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">{{ m.name }}</h5>
+          <p class="card-text">Threshold: {{ m.hours_threshold }} hours</p>
+          {% if m.unlocked %}
+            <span class="badge bg-warning text-dark">Unlocked</span>
+          {% else %}
+            <span class="text-muted">Locked</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

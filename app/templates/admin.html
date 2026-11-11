@@ -1,0 +1,34 @@
+{% extends "authenticated-base.html" %}
+{% block title %}Admin — Student Awards{% endblock %}
+
+{% block subpage_content %}
+<div class="container-fluid py-2">
+  <h1 class="h4 mb-2">Admin</h1>
+  <p class="text-muted mb-3">Admin tools for reviewing hours and fulfilling redemptions.</p>
+
+  <div class="row g-3">
+    <div class="col-sm-6">
+      <a href="{{ url_for('admin_approvals_view') }}" class="text-decoration-none">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Pending Hours</h5>
+            <p class="display-6 mb-0">{{ pending_count }}</p>
+            <p class="text-muted small mb-0">Submitted hour logs awaiting review</p>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col-sm-6">
+      <a href="/redemptions" class="text-decoration-none">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Requested Redemptions</h5>
+            <p class="display-6 mb-0">{{ redemptions_count }}</p>
+            <p class="text-muted small mb-0">Prize redemptions pending fulfillment</p>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

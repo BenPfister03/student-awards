@@ -1,0 +1,76 @@
+digraph ERD {
+  graph [rankdir=LR, splines=true, nodesep=0.5, ranksep=1.6, fontname="Helvetica", bgcolor="white", pad=0.3];
+  node  [shape=plain, fontname="Helvetica", fontsize=11];
+  edge  [fontname="Helvetica", fontsize=10, color="#031627", arrowhead=none];
+
+  User [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+    <tr><td bgcolor="#031627"><font color="#d4af37"><b>User</b></font></td></tr>
+    <tr><td align="left"><b>PK</b> id : int</td></tr>
+    <tr><td align="left">username : str (unique)</td></tr>
+    <tr><td align="left">email : str (unique)</td></tr>
+    <tr><td align="left">password : str (argon2 hash)</td></tr>
+    <tr><td align="left">role : str (admin | regular_user)</td></tr>
+    <tr><td align="left">total_hours : float</td></tr>
+    <tr><td align="left">points_spent : float</td></tr></table>>];
+
+  Activity [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+    <tr><td bgcolor="#031627"><font color="#d4af37"><b>Activity</b></font></td></tr>
+    <tr><td align="left"><b>PK</b> id : int</td></tr>
+    <tr><td align="left">title : str</td></tr>
+    <tr><td align="left">description : str?</td></tr>
+    <tr><td align="left">category : str?</td></tr>
+    <tr><td align="left">is_active : bool</td></tr></table>>];
+
+  HourLog [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+    <tr><td bgcolor="#031627"><font color="#d4af37"><b>HourLog</b></font></td></tr>
+    <tr><td align="left"><b>PK</b> id : int</td></tr>
+    <tr><td align="left"><b>FK</b> user_id -&gt; User</td></tr>
+    <tr><td align="left"><b>FK</b> activity_id -&gt; Activity</td></tr>
+    <tr><td align="left"><b>FK</b> reviewed_by -&gt; User?</td></tr>
+    <tr><td align="left">hours : float</td></tr>
+    <tr><td align="left">proof_note : str?</td></tr>
+    <tr><td align="left">status : pending | approved | rejected</td></tr>
+    <tr><td align="left">reject_reason : str?</td></tr>
+    <tr><td align="left">submitted_at, reviewed_at : datetime</td></tr></table>>];
+
+  Milestone [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+    <tr><td bgcolor="#031627"><font color="#d4af37"><b>Milestone</b></font></td></tr>
+    <tr><td align="left"><b>PK</b> id : int</td></tr>
+    <tr><td align="left">name : str</td></tr>
+    <tr><td align="left">hours_threshold : float</td></tr>
+    <tr><td align="left">badge_label : str?</td></tr>
+    <tr><td align="left">created_at : datetime</td></tr></table>>];
+
+  UserMilestone [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+    <tr><td bgcolor="#031627"><font color="#d4af37"><b>UserMilestone</b></font></td></tr>
+    <tr><td align="left"><b>PK</b> id : int</td></tr>
+    <tr><td align="left"><b>FK</b> user_id -&gt; User</td></tr>
+    <tr><td align="left"><b>FK</b> milestone_id -&gt; Milestone</td></tr>
+    <tr><td align="left">unlocked_at : datetime</td></tr></table>>];
+
+  Prize [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+    <tr><td bgcolor="#031627"><font color="#d4af37"><b>Prize</b></font></td></tr>
+    <tr><td align="left"><b>PK</b> id : int</td></tr>
+    <tr><td align="left">name : str</td></tr>
+    <tr><td align="left">description : str?</td></tr>
+    <tr><td align="left">hours_cost : float</td></tr>
+    <tr><td align="left">stock : int</td></tr>
+    <tr><td align="left">is_active : bool</td></tr></table>>];
+
+  Redemption [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+    <tr><td bgcolor="#031627"><font color="#d4af37"><b>Redemption</b></font></td></tr>
+    <tr><td align="left"><b>PK</b> id : int</td></tr>
+    <tr><td align="left"><b>FK</b> user_id -&gt; User</td></tr>
+    <tr><td align="left"><b>FK</b> prize_id -&gt; Prize</td></tr>
+    <tr><td align="left"><b>FK</b> fulfilled_by -&gt; User?</td></tr>
+    <tr><td align="left">hours_cost : float (snapshot)</td></tr>
+    <tr><td align="left">status : requested | fulfilled</td></tr>
+    <tr><td align="left">requested_at, fulfilled_at : datetime</td></tr></table>>];
+
+  User -> HourLog        [taillabel="1", headlabel="0..*", label="submits / reviews"];
+  Activity -> HourLog    [taillabel="1", headlabel="0..*", label="logged as"];
+  User -> UserMilestone  [taillabel="1", headlabel="0..*", label="earns"];
+  Milestone -> UserMilestone [taillabel="1", headlabel="0..*", label="granted in"];
+  User -> Redemption     [taillabel="1", headlabel="0..*", label="requests / fulfils"];
+  Prize -> Redemption    [taillabel="1", headlabel="0..*", label="claimed as"];
+}
