@@ -1,4 +1,4 @@
-# comp3613a1
+# comp3613a2
 
 COMP 3613 Assignment 1 starter ([uwidcit/comp3613a1](https://github.com/uwidcit/comp3613a1)). Built on **FastStarter** (FastAPI + SQLModel).
 
